@@ -654,29 +654,12 @@ body {
   const today = new Date();
   today.setHours(0,0,0,0);
 
-  // ── Init ──
+    // ── Init ──
   window.addEventListener("DOMContentLoaded", async () => {
-    const params = new URLSearchParams(window.location.search);
-    clientId = params.get("id");
+    const pathSegments = window.location.pathname.split('/');
+    clientId = pathSegments[pathSegments.length - 1];
 
     if (!clientId) { showNotFound(); return; }
-
-    try {
-      await Promise.all([
-        fetchClient(),
-        fetchVisits(),
-        fetchReports(),
-        fetchGallery(),
-      ]);
-      renderAll();
-      hide("loadingScreen");
-      show("portal");
-} catch (e) {
-    document.getElementById("loadingScreen").classList.add("hidden");
-    document.getElementById("notFound").classList.add("show");
-    document.querySelector("#notFound p").textContent = e.message;
-}
-  });
 
   // ── Fetch ──
   async function airtableFetch(table, filterFormula) {
