@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kate Helps Animals — Your Pet Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --clay:       #C4714A;
+      --clay-dark:  #A05A38;
+      --clay-light: #F0D5C4;
+      --sage:       #7A9E7E;
+      --sage-light: #B2CDAC;
+      --sage-pale:  #EBF4EB;
+      --cream:      #FAF5EE;
+      --warm-white: #FFFDF9;
+      --ink:        #2C2416;
+      --muted:      #7A6E60;
+      --border:     #E0D6C8;
+      --gold:       #C9A84C;
+      --gold-pale:  #F8F0DC;
+      --success:    #2E7D52;
+      --error:      #C0392B;
+    }
+
+```
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+/* ── Not Found ── */
+#notFound {
+  display: none;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 1rem;
+  text-align: center;
+  padding: 2rem;
+}
+#notFound.show { display: flex; }
+#notFound h1 { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--clay); }
+#notFound p { color: var(--muted); font-size: .9rem; }
+
+/* ── Loading ── */
+#loadingScreen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 1rem;
+  background: var(--ink);
+}
+#loadingScreen.hidden { display: none; }
+.load-paw { font-size: 2.5rem; animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: .4; transform: scale(.9); } 50% { opacity: 1; transform: scale(1.05); } }
+.load-text { color: var(--sage-light); font-size: .9rem; font-weight: 300; }
+
+/* ── Hero Header ── */
+#portal { display: none; }
+#portal.show { display: block; }
+
+.hero {
+  background: var(--ink);
+  padding: 2.5rem 1.5rem 0;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 20% 0%, #4a3020 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 100%, #1a2a1a 0%, transparent 60%);
+}
+.hero-inner {
+  max-width: 680px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+.kate-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  background: rgba(122,158,126,.15);
+  border: 1px solid rgba(178,205,172,.2);
+  border-radius: 99px;
+  padding: .3rem .75rem;
+  font-size: .75rem;
+  color: var(--sage-light);
+  margin-bottom: 1.25rem;
+  letter-spacing: .04em;
+}
+.hero h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 5vw, 2.4rem);
+  color: var(--cream);
+  line-height: 1.2;
+  margin-bottom: .4rem;
+}
+.hero h1 em { color: var(--clay); font-style: italic; }
+.hero-sub { color: #a09080; font-size: .9rem; font-weight: 300; margin-bottom: 2rem; }
+
+/* ── Tab Bar ── */
+.tab-bar {
+  display: flex;
+  gap: 0;
+  border-top: 1px solid rgba(255,255,255,.06);
+  position: relative;
+  z-index: 1;
+}
+.tab {
+  flex: 1;
+  padding: .85rem .5rem;
+  text-align: center;
+  font-size: .78rem;
+  font-weight: 500;
+  color: #706050;
+  cursor: pointer;
+  transition: all .2s;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+.tab:hover { color: var(--cream); }
+.tab.active { color: var(--clay); border-bottom-color: var(--clay); }
+.tab-icon { display: block; font-size: 1.1rem; margin-bottom: .2rem; }
+
+/* ── Content ── */
+.portal-content {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 1.75rem 1.25rem 4rem;
+}
+.tab-view { display: none; animation: fadeUp .3s ease both; }
+.tab-view.active { display: block; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── Cards ── */
+.card {
+  background: var(--warm-white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+.card-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  color: var(--ink);
+}
+.card-body { padding: 1.25rem; }
+
+/* ── Pet Profile ── */
+.pet-profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .75rem;
+}
+@media (max-width: 400px) { .pet-profile-grid { grid-template-columns: 1fr; } }
+.profile-item { }
+.profile-label {
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: .2rem;
+}
+.profile-value {
+  font-size: .9rem;
+  color: var(--ink);
+  font-weight: 500;
+}
+.profile-block {
+  background: var(--cream);
+  border-radius: 8px;
+  padding: .75rem 1rem;
+  font-size: .85rem;
+  line-height: 1.6;
+  color: var(--ink);
+  margin-top: .75rem;
+  white-space: pre-wrap;
+}
+.profile-block-label {
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--clay);
+  margin-bottom: .4rem;
+}
+
+/* ── Visit Cards ── */
+.visit-card {
+  background: var(--warm-white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.1rem 1.25rem;
+  margin-bottom: .85rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.visit-date-block {
+  background: var(--clay);
+  color: white;
+  border-radius: 8px;
+  padding: .5rem .65rem;
+  text-align: center;
+  min-width: 48px;
+  flex-shrink: 0;
+}
+.visit-month { font-size: .6rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.visit-day   { font-family: 'Playfair Display', serif; font-size: 1.3rem; line-height: 1; }
+.visit-info  { flex: 1; }
+.visit-service { font-weight: 600; font-size: .9rem; color: var(--ink); }
+.visit-status  { font-size: .78rem; color: var(--muted); margin-top: .2rem; }
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  font-size: .7rem;
+  font-weight: 600;
+  padding: .2rem .55rem;
+  border-radius: 99px;
+}
+.badge-confirmed { background: var(--sage-pale); color: var(--success); }
+.badge-completed { background: var(--gold-pale); color: #7a5c10; }
+.badge-cancelled { background: #fef0f0; color: var(--error); }
+.paid-badge {
+  font-size: .7rem;
+  font-weight: 600;
+  padding: .2rem .55rem;
+  border-radius: 99px;
+}
+.paid-yes { background: var(--sage-pale); color: var(--success); }
+.paid-no  { background: #fef0f0; color: var(--error); }
+
+/* ── Report Cards ── */
+.report-card {
+  background: var(--warm-white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+}
+.report-header {
+  background: linear-gradient(135deg, var(--ink) 0%, #3d2e1a 100%);
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.report-header-left h3 {
+  font-family: 'Playfair Display', serif;
+  color: var(--cream);
+  font-size: 1rem;
+}
+.report-header-left p { color: var(--sage-light); font-size: .78rem; margin-top: .15rem; }
+.report-body { padding: 1.25rem; }
+.report-section { margin-bottom: 1rem; }
+.report-section:last-child { margin-bottom: 0; }
+.report-section-label {
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--clay);
+  margin-bottom: .4rem;
+}
+.report-section p {
+  font-size: .88rem;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.message-box {
+  background: linear-gradient(135deg, var(--cream) 0%, var(--gold-pale) 100%);
+  border: 1px solid #e8d9b0;
+  border-radius: 10px;
+  padding: .85rem 1rem;
+  font-size: .88rem;
+  line-height: 1.6;
+  color: var(--ink);
+  font-style: italic;
+}
+.message-sig {
+  font-size: .78rem;
+  color: var(--muted);
+  margin-top: .4rem;
+  font-style: normal;
+  font-weight: 500;
+}
+
+/* ── Gallery ── */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: .75rem;
+}
+.gallery-item {
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--border);
+  position: relative;
+  cursor: pointer;
+}
+.gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform .3s;
+}
+.gallery-item:hover img { transform: scale(1.05); }
+.gallery-caption {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: linear-gradient(transparent, rgba(44,36,22,.8));
+  color: white;
+  font-size: .7rem;
+  padding: .75rem .5rem .4rem;
+  opacity: 0;
+  transition: opacity .2s;
+}
+.gallery-item:hover .gallery-caption { opacity: 1; }
+
+/* ── Lightbox ── */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.92);
+  z-index: 999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  flex-direction: column;
+  gap: .75rem;
+}
+.lightbox.open { display: flex; }
+.lightbox img {
+  max-width: 100%;
+  max-height: 80vh;
+  border-radius: 10px;
+  object-fit: contain;
+}
+.lightbox-caption { color: white; font-size: .85rem; opacity: .7; }
+.lightbox-close {
+  position: absolute;
+  top: 1rem; right: 1rem;
+  background: rgba(255,255,255,.1);
+  border: none;
+  color: white;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+/* ── Update Form ── */
+.form-field { margin-bottom: 1.1rem; }
+.form-label {
+  display: block;
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: .4rem;
+}
+.form-input,
+.form-textarea,
+.form-select {
+  width: 100%;
+  padding: .75rem 1rem;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: .9rem;
+  color: var(--ink);
+  background: var(--warm-white);
+  transition: border-color .2s;
+  appearance: none;
+}
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+  outline: none;
+  border-color: var(--clay);
+  box-shadow: 0 0 0 3px rgba(196,113,74,.1);
+}
+.form-textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+.submit-btn {
+  width: 100%;
+  padding: .9rem;
+  background: var(--clay);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: .95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .2s;
+}
+.submit-btn:hover { background: var(--clay-dark); }
+.submit-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ── Balance Summary ── */
+.balance-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .85rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  font-size: .9rem;
+}
+.balance-row:last-child { border-bottom: none; }
+.balance-label { color: var(--muted); }
+.balance-val { font-weight: 600; color: var(--ink); }
+
+/* ── Section heading ── */
+.section-head {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  color: var(--ink);
+  margin-bottom: 1rem;
+}
+
+/* ── Empty state ── */
+.empty {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--muted);
+}
+.empty-icon { font-size: 2rem; margin-bottom: .5rem; }
+.empty p { font-size: .85rem; }
+
+/* ── Toast ── */
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--success);
+  color: white;
+  padding: .75rem 1.5rem;
+  border-radius: 8px;
+  font-size: .88rem;
+  z-index: 500;
+  transition: transform .3s;
+  white-space: nowrap;
+}
+.toast.error { background: var(--error); }
+.toast.show { transform: translateX(-50%) translateY(0); }
+```
+
+  </style>
+</head>
+<body>
+
+<!-- Loading -->
+
+<div id="loadingScreen">
+  <div class="load-paw">🐾</div>
+  <div class="load-text">Loading your pet portal...</div>
+</div>
+
+<!-- Not Found -->
+
+<div id="notFound">
+  <div style="font-size:2.5rem;">🐾</div>
+  <h1>Portal not found</h1>
+  <p>This link may be invalid or expired.<br>Please contact Kate for a new link.</p>
+  <p style="margin-top:.5rem;font-size:.8rem;color:var(--border);">katehelpanimals.com</p>
+</div>
+
+<!-- Portal -->
+
+<div id="portal">
+  <div class="hero">
+    <div class="hero-inner">
+      <div class="kate-badge">🐾 Kate Helps Animals — Pet Portal</div>
+      <h1>Hey, <em id="clientFirstName">friend</em>.</h1>
+      <div class="hero-sub">Everything about <span id="heroPetName">your pet</span> in one place.</div>
+    </div>
+
+```
+<div class="tab-bar">
+  <div class="tab active" onclick="showTab('visits')" id="tab-visits">
+    <span class="tab-icon">📅</span>Visits
+  </div>
+  <div class="tab" onclick="showTab('reports')" id="tab-reports">
+    <span class="tab-icon">📝</span>Reports
+  </div>
+  <div class="tab" onclick="showTab('gallery')" id="tab-gallery">
+    <span class="tab-icon">📸</span>Gallery
+  </div>
+  <div class="tab" onclick="showTab('profile')" id="tab-profile">
+    <span class="tab-icon">🐶</span>Profile
+  </div>
+  <div class="tab" onclick="showTab('update')" id="tab-update">
+    <span class="tab-icon">✏️</span>Update
+  </div>
+</div>
+```
+
+  </div>
+
+  <div class="portal-content">
+
+```
+<!-- VISITS -->
+<div class="tab-view active" id="view-visits">
+
+  <!-- Balance card -->
+  <div class="card" style="margin-bottom:1.25rem;">
+    <div class="card-header">
+      <div class="card-title">Visit Summary</div>
+    </div>
+    <div class="balance-row">
+      <span class="balance-label">Total visits</span>
+      <span class="balance-val" id="totalVisits">–</span>
+    </div>
+    <div class="balance-row">
+      <span class="balance-label">Completed</span>
+      <span class="balance-val" id="completedVisits">–</span>
+    </div>
+    <div class="balance-row">
+      <span class="balance-label" style="color:var(--error);">Unpaid visits</span>
+      <span class="balance-val" style="color:var(--error);" id="unpaidVisits">–</span>
+    </div>
+  </div>
+
+  <div class="section-head">Upcoming</div>
+  <div id="upcomingVisits"></div>
+
+  <div class="section-head" style="margin-top:1.5rem;">Past Visits</div>
+  <div id="pastVisits"></div>
+</div>
+
+<!-- REPORT CARDS -->
+<div class="tab-view" id="view-reports">
+  <div id="reportCardsList"></div>
+</div>
+
+<!-- GALLERY -->
+<div class="tab-view" id="view-gallery">
+  <div id="galleryGrid" class="gallery-grid"></div>
+</div>
+
+<!-- PROFILE -->
+<div class="tab-view" id="view-profile">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title" id="profilePetName">Your Pet</div>
+      <div style="font-size:.8rem;color:var(--muted);" id="profileSpecies"></div>
+    </div>
+    <div class="card-body">
+      <div class="pet-profile-grid" id="profileGrid"></div>
+      <div id="profileBlocks"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Your Contact Info</div></div>
+    <div class="card-body">
+      <div class="pet-profile-grid" id="ownerGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- UPDATE FORM -->
+<div class="tab-view" id="view-update">
+  <div class="card">
+    <div class="card-header"><div class="card-title">Update Your Info</div></div>
+    <div class="card-body">
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1.25rem;line-height:1.5;">Changed something? Let Kate know below. She'll update your records.</p>
+
+      <div class="form-field">
+        <label class="form-label">What do you need to update?</label>
+        <select class="form-select" id="updateType">
+          <option value="">Select one</option>
+          <option value="contact">My contact info</option>
+          <option value="pet">Pet info or medication change</option>
+          <option value="new-pet">Add a new pet</option>
+          <option value="vet">Vet information</option>
+          <option value="emergency">Emergency contact</option>
+          <option value="other">Something else</option>
+        </select>
+      </div>
+
+      <div class="form-field">
+        <label class="form-label">Details</label>
+        <textarea class="form-textarea" id="updateDetails" placeholder="Describe what's changed..."></textarea>
+      </div>
+
+      <div class="form-field">
+        <label class="form-label">Your name (so Kate knows who this is from)</label>
+        <input type="text" class="form-input" id="updateName" placeholder="Your name" />
+      </div>
+
+      <button class="submit-btn" id="updateSubmitBtn" onclick="submitUpdate()">Send Update to Kate 🐾</button>
+    </div>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- Lightbox -->
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightboxImg" src="" alt="" />
+  <div class="lightbox-caption" id="lightboxCaption"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ─── CONFIGURATION — paste your credentials here ───────────────────
+  const AIRTABLE_TOKEN   = "patYiRTWThqVutpf5.10e05df7a69d0ca9959dcb9eabf71e5dcc4e4e258bf366dc7f8e2bfa14c99ae3";
+  const AIRTABLE_BASE_ID = "Ei83uaftpMV3UO";
+  // ────────────────────────────────────────────────────────────────────
+
+  const TABLES = {
+    clients:     "Intake Submissions",
+    visits:      "Visits",
+    reportCards: "Report Cards",
+    gallery:     "Gallery",
+    updates:     "Client Updates",
+  };
+
+  let clientId = null;
+  let clientRecord = null;
+  let visits = [], reports = [], gallery = [];
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  // ── Init ──
+  window.addEventListener("DOMContentLoaded", async () => {
+    const params = new URLSearchParams(window.location.search);
+    clientId = params.get("id");
+
+    if (!clientId) { showNotFound(); return; }
+
+    try {
+      await Promise.all([
+        fetchClient(),
+        fetchVisits(),
+        fetchReports(),
+        fetchGallery(),
+      ]);
+      renderAll();
+      hide("loadingScreen");
+      show("portal");
+    } catch (e) {
+      console.error(e);
+      showNotFound();
+    }
+  });
+
+  // ── Fetch ──
+  async function airtableFetch(table, filterFormula) {
+    const url = new URL(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(table)}`);
+    if (filterFormula) url.searchParams.set("filterByFormula", filterFormula);
+    url.searchParams.set("pageSize", "100");
+    const res = await fetch(url, { headers: { "Authorization": `Bearer ${AIRTABLE_TOKEN}` } });
+    if (!res.ok) throw new Error(`Airtable error: ${res.status}`);
+    const data = await res.json();
+    return data.records || [];
+  }
+
+  async function fetchClient() {
+    const res = await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(TABLES.clients)}/${clientId}`, {
+      headers: { "Authorization": `Bearer ${AIRTABLE_TOKEN}` }
+    });
+    if (!res.ok) throw new Error("Client not found");
+    clientRecord = await res.json();
+  }
+
+  async function fetchVisits() {
+    visits = await airtableFetch(TABLES.visits, `{Client ID}="${clientId}"`);
+    visits.sort((a,b) => new Date(b.fields["Date"] || 0) - new Date(a.fields["Date"] || 0));
+  }
+
+  async function fetchReports() {
+    reports = await airtableFetch(TABLES.reportCards, `{Client ID}="${clientId}"`);
+    reports.sort((a,b) => new Date(b.fields["Visit Date"] || 0) - new Date(a.fields["Visit Date"] || 0));
+  }
+
+  async function fetchGallery() {
+    gallery = await airtableFetch(TABLES.gallery, `{Client ID}="${clientId}"`);
+    gallery.sort((a,b) => new Date(b.fields["Date"] || 0) - new Date(a.fields["Date"] || 0));
+  }
+
+  // ── Render All ──
+  function renderAll() {
+    const f = clientRecord.fields;
+    const firstName = (f["Owner Name"] || "").split(" ")[0];
+    const petName   = f["Pet Name"] || "your pet";
+    document.getElementById("clientFirstName").textContent = firstName || "friend";
+    document.getElementById("heroPetName").textContent = petName;
+    document.title = `${petName}'s Portal — Kate Helps Animals`;
+
+    renderVisits();
+    renderReports();
+    renderGallery();
+    renderProfile();
+  }
+
+  // ── Visits ──
+  function renderVisits() {
+    const upcoming = visits.filter(v => v.fields["Date"] && new Date(v.fields["Date"] + "T00:00:00") >= today);
+    const past     = visits.filter(v => v.fields["Date"] && new Date(v.fields["Date"] + "T00:00:00") < today);
+    const unpaid   = visits.filter(v => v.fields["Status"] === "Completed" && !v.fields["Paid"]);
+
+    document.getElementById("totalVisits").textContent     = visits.length;
+    document.getElementById("completedVisits").textContent = visits.filter(v => v.fields["Status"] === "Completed").length;
+    document.getElementById("unpaidVisits").textContent    = unpaid.length > 0 ? `${unpaid.length} visit${unpaid.length > 1 ? "s" : ""}` : "None 🎉";
+
+    document.getElementById("upcomingVisits").innerHTML = upcoming.length
+      ? upcoming.map(visitCardHTML).join("")
+      : empty("📅", "No upcoming visits scheduled.");
+
+    document.getElementById("pastVisits").innerHTML = past.length
+      ? past.map(visitCardHTML).join("")
+      : empty("🐾", "No past visits yet.");
+  }
+
+  function visitCardHTML(record) {
+    const f = record.fields;
+    const d = new Date((f["Date"] || "") + "T00:00:00");
+    const month = d.toLocaleDateString("en-US", { month: "short" }).toUpperCase();
+    const day   = d.getDate();
+    const statusMap = {
+      "Confirmed":  `<span class="status-badge badge-confirmed">✓ Confirmed</span>`,
+      "Completed":  `<span class="status-badge badge-completed">★ Completed</span>`,
+      "Cancelled":  `<span class="status-badge badge-cancelled">✕ Cancelled</span>`,
+    };
+    const statusBadge = statusMap[f["Status"]] || "";
+    const paidBadge   = f["Status"] === "Completed"
+      ? (f["Paid"] ? `<span class="paid-badge paid-yes">✓ Paid</span>` : `<span class="paid-badge paid-no">Unpaid</span>`)
+      : "";
+
+    return `
+      <div class="visit-card">
+        <div class="visit-date-block">
+          <div class="visit-month">${month}</div>
+          <div class="visit-day">${day}</div>
+        </div>
+        <div class="visit-info">
+          <div class="visit-service">${f["Service Type"] || "Visit"}</div>
+          <div class="visit-status" style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin-top:.3rem;">
+            ${statusBadge} ${paidBadge}
+          </div>
+          ${f["Notes"] ? `<div style="font-size:.78rem;color:var(--muted);margin-top:.35rem;">${f["Notes"]}</div>` : ""}
+        </div>
+      </div>`;
+  }
+
+  // ── Report Cards ──
+  function renderReports() {
+    const el = document.getElementById("reportCardsList");
+    el.innerHTML = reports.length ? reports.map(reportCardHTML).join("") : empty("📝", "No report cards yet. Check back after your first visit!");
+  }
+
+  function reportCardHTML(record) {
+    const f = record.fields;
+    const d = fmtDate(f["Visit Date"]);
+    const photos = (f["Photo URLs"] || "").split(",").map(u => u.trim()).filter(Boolean);
+
+    return `
+      <div class="report-card">
+        <div class="report-header">
+          <div class="report-header-left">
+            <h3>${f["Pet Name"] || "Visit"} Report Card</h3>
+            <p>${d}</p>
+          </div>
+          <span style="font-size:1.5rem;">📝</span>
+        </div>
+        <div class="report-body">
+          ${f["Summary"] ? `<div class="report-section"><div class="report-section-label">How it went</div><p>${f["Summary"]}</p></div>` : ""}
+          ${f["Activities"] ? `<div class="report-section"><div class="report-section-label">What we did</div><p>${f["Activities"]}</p></div>` : ""}
+          ${f["Message to Client"] ? `
+            <div class="report-section">
+              <div class="report-section-label">A note from Kate</div>
+              <div class="message-box">
+                ${f["Message to Client"]}
+                <div class="message-sig">— Kate 🐾</div>
+              </div>
+            </div>` : ""}
+          ${photos.length ? `
+            <div class="report-section">
+              <div class="report-section-label">Photos from this visit</div>
+              <div class="gallery-grid" style="margin-top:.5rem;">
+                ${photos.map(url => `
+                  <div class="gallery-item" onclick="openLightbox('${url}','')">
+                    <img src="${url}" alt="Visit photo" loading="lazy" onerror="this.parentElement.style.display='none'" />
+                  </div>`).join("")}
+              </div>
+            </div>` : ""}
+        </div>
+      </div>`;
+  }
+
+  // ── Gallery ──
+  function renderGallery() {
+    const el = document.getElementById("galleryGrid");
+    el.innerHTML = gallery.length
+      ? gallery.map(g => `
+          <div class="gallery-item" onclick="openLightbox('${g.fields["Photo URL"] || ""}','${(g.fields["Caption"] || "").replace(/'/g,"\\'")}')">
+            <img src="${g.fields["Photo URL"] || ""}" alt="${g.fields["Caption"] || ""}" loading="lazy" onerror="this.parentElement.style.display='none'" />
+            ${g.fields["Caption"] ? `<div class="gallery-caption">${g.fields["Caption"]}</div>` : ""}
+          </div>`).join("")
+      : empty("📸", "No photos yet. Kate will add them after visits!");
+  }
+
+  // ── Profile ──
+  function renderProfile() {
+    const f = clientRecord.fields;
+    const details = parseDetails(f["Full Details"] || "");
+
+    document.getElementById("profilePetName").textContent = f["Pet Name"] || "Your Pet";
+    document.getElementById("profileSpecies").textContent = f["Species"] || "";
+
+    document.getElementById("profileGrid").innerHTML = [
+      profileItem("Breed",        details["BREED"]),
+      profileItem("Age",          details["AGE"]),
+      profileItem("Sex",          details["SEX"]),
+      profileItem("Microchipped", details["MICROCHIPPED"]),
+      profileItem("Vaccines",     details["VACCINES"]),
+    ].filter(Boolean).join("");
+
+    const blocks = [
+      { label: "Feeding",          val: details["FEEDING"] },
+      { label: "Daily Routine",    val: details["DAILY ROUTINE"] },
+      { label: "Medications",      val: details["MEDICATIONS"] },
+      { label: "Allergies",        val: details["ALLERGIES"] },
+      { label: "Behavioral Notes", val: details["BEHAVIORAL NOTES"] },
+    ].filter(b => b.val);
+
+    document.getElementById("profileBlocks").innerHTML = blocks.map(b => `
+      <div style="margin-top:1rem;">
+        <div class="profile-block-label">${b.label}</div>
+        <div class="profile-block">${b.val}</div>
+      </div>`).join("");
+
+    document.getElementById("ownerGrid").innerHTML = [
+      profileItem("Name",  f["Owner Name"]),
+      profileItem("Email", f["Email"]),
+      profileItem("Phone", f["Phone"]),
+    ].filter(Boolean).join("");
+  }
+
+  function profileItem(label, val) {
+    if (!val) return "";
+    return `<div class="profile-item"><div class="profile-label">${label}</div><div class="profile-value">${val}</div></div>`;
+  }
+
+  // ── Update Form ──
+  async function submitUpdate() {
+    const type    = document.getElementById("updateType").value;
+    const details = document.getElementById("updateDetails").value.trim();
+    const name    = document.getElementById("updateName").value.trim();
+
+    if (!type || !details || !name) {
+      showToast("Please fill in all fields.", true);
+      return;
+    }
+
+    const btn = document.getElementById("updateSubmitBtn");
+    btn.disabled = true;
+    btn.textContent = "Sending...";
+
+    try {
+      const res = await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(TABLES.updates)}`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${AIRTABLE_TOKEN}`,
+          "Content-Type":  "application/json",
+        },
+        body: JSON.stringify({ fields: {
+          "Client ID":   clientId,
+          "Client Name": name,
+          "Update Type": type,
+          "Details":     details,
+          "Submitted":   new Date().toISOString().split("T")[0],
+        }})
+      });
+
+      if (!res.ok) throw new Error();
+      showToast("Update sent to Kate!");
+      document.getElementById("updateDetails").value = "";
+      document.getElementById("updateType").value    = "";
+      document.getElementById("updateName").value    = "";
+    } catch {
+      showToast("Something went wrong. Try again.", true);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Send Update to Kate 🐾";
+    }
+  }
+
+  // ── Helpers ──
+  function showTab(id) {
+    document.querySelectorAll(".tab-view").forEach(v => v.classList.remove("active"));
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.getElementById(`view-${id}`).classList.add("active");
+    document.getElementById(`tab-${id}`).classList.add("active");
+  }
+
+  function parseDetails(text) {
+    const result = {};
+    text.split("\n\n").forEach(line => {
+      const idx = line.indexOf(":");
+      if (idx === -1) return;
+      result[line.slice(0,idx).trim()] = line.slice(idx+1).trim();
+    });
+    return result;
+  }
+
+  function fmtDate(d) {
+    if (!d) return "";
+    return new Date(d + "T00:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  }
+
+  function empty(icon, msg) {
+    return `<div class="empty"><div class="empty-icon">${icon}</div><p>${msg}</p></div>`;
+  }
+
+  function openLightbox(url, caption) {
+    document.getElementById("lightboxImg").src       = url;
+    document.getElementById("lightboxCaption").textContent = caption;
+    document.getElementById("lightbox").classList.add("open");
+  }
+  function closeLightbox() { document.getElementById("lightbox").classList.remove("open"); }
+
+  function showToast(msg, isError) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className   = "toast" + (isError ? " error" : "") + " show";
+    setTimeout(() => t.classList.remove("show"), 3500);
+  }
+
+  function show(id) { document.getElementById(id).classList.add("show"); }
+  function hide(id) { document.getElementById(id).classList.add("hidden"); }
+  function showNotFound() {
+    document.getElementById("loadingScreen").classList.add("hidden");
+    document.getElementById("notFound").classList.add("show");
+  }
+</script>
+
+</body>
+</html>
+
